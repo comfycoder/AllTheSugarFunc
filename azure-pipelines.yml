@@ -7,30 +7,38 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
-
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-
+  vmImage: 'Ubuntu 16.04'
+   
 steps:
-- task: NuGetToolInstaller@0
+ 
+- script: dotnet build 'AllTheSugarFunc/AllTheSugarFunc.sln' --configuration $(buildConfiguration)
+  displayName: 'Build solution'
+     
+- script: dotnet test 'AllTheSugarFunc/AllTheSugarFunc.Tests' --configuration $(buildConfiguration) --logger trx
+  displayName: 'Run unit tests'
+ 
+- task: PublishTestResults@2
   inputs:
-    version: '2.1.700'
-
-- task: NuGetCommand@2
+    testRunner: VSTest
+    testResultsFiles: '**/*.trx'
+ 
+- script: dotnet publish 'AllTheSugarFunc/AllTheSugarFunc/AllTheSugarFunc.csproj' --configuration $(buildConfiguration) --output '$(Build.ArtifactStagingDirectory)/app'
+  displayName: 'Package function app'
+ 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publishing app artifact'
   inputs:
-    restoreSolution: '$(solution)'
-
-- task: VSBuild@1
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)/app'
+    artifactName: app
+ 
+- task: CopyFiles@2
+  displayName: 'Copy end to end tests'
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-- task: VSTest@2
+    sourceFolder: 'AllTheSugarFunc'
+    targetFolder: '$(Build.ArtifactStagingDirectory)/e2etests'
+ 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish end to end test artifact'
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)/e2etests'
+    artifactName: e2etests
