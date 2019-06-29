@@ -11,10 +11,10 @@ pool:
    
 steps:
  
-- script: dotnet build 'AllTheSugarFunc.sln' --configuration $(buildConfiguration)
+- script: dotnet build './AllTheSugarFunc.sln' --configuration $(buildConfiguration)
   displayName: 'Build solution'
      
-- script: dotnet publish 'AllTheSugarFunc/AllTheSugarFunc.csproj' --configuration $(buildConfiguration) --output '$(Build.ArtifactStagingDirectory)/app'
+- script: dotnet publish './AllTheSugarFunc/AllTheSugarFunc.csproj' --configuration $(buildConfiguration) --output '$(Build.ArtifactStagingDirectory)/app'
   displayName: 'Package function app'
  
 - task: PublishBuildArtifacts@1
